@@ -8,8 +8,32 @@ EXPOSE 443
 # CDP PLATFORM HEALTHCHECK REQUIREMENT
 RUN apt update && \
     apt install curl -y && \
-    apt-get clean && \
     rm -rf /var/lib/apt/lists/*
+    
+
+RUN curl -L -o /tmp/zulu.tar.gz https://cdn.azul.com/zulu/bin/zulu21.36.17-ca-jdk21.0.4-linux_x64.tar.gz \
+    && mkdir -p /usr/lib/jvm \
+    && tar -xvf /tmp/zulu.tar.gz -C /usr/lib/jvm \
+    && rm /tmp/zulu.tar.gz \
+    && ln -s /usr/lib/jvm/zulu21.36.17-ca-jdk21.0.4-linux_x64 /usr/lib/jvm/default-java
+
+
+RUN ls -l /usr/lib/jvm/default-java
+
+# Set environment variables
+ENV JAVA_HOME=/usr/lib/jvm/default-java
+ENV PATH="$JAVA_HOME/bin:$PATH"
+
+RUN echo $PATH
+
+# Install Liquibase
+RUN curl -sL https://github.com/liquibase/liquibase/releases/download/v4.23.0/liquibase-4.23.0.tar.gz \
+    | tar -xz -C /opt \
+    && ln -s /opt/liquibase /usr/local/bin/liquibase 
+
+
+# Verify installation
+RUN java -version && liquibase --version
 
 # Build stage image
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build

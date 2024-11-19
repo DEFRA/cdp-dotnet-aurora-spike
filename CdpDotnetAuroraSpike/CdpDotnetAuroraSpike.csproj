@@ -14,12 +14,17 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Elastic.CommonSchema.Serilog" Version="8.11.1"/>
+    <PackageReference Include="Elastic.CommonSchema.Serilog" Version="8.11.1" />
     <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="11.9.2" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.11" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.11" />
     <PackageReference Include="MongoDB.Driver" Version="2.28.0" />
-    <PackageReference Include="Serilog.AspNetCore" Version="8.0.2"/>
+    <PackageReference Include="MySql.Data" Version="9.1.0" />
+    <PackageReference Include="MySql.EntityFrameworkCore" Version="8.0.8" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.10" />
+    <PackageReference Include="Serilog.AspNetCore" Version="8.0.2" />
     <PackageReference Include="Serilog.Enrichers.Environment" Version="3.0.1" />
-    <PackageReference Include="Serilog.Enrichers.Thread" Version="4.0.0"/>
+    <PackageReference Include="Serilog.Enrichers.Thread" Version="4.0.0" />
     <PackageReference Include="Serilog.Settings.Configuration" Version="8.0.2" />
   </ItemGroup>
 
