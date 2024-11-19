@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using CdpDotnetAuroraSpike.Example.Endpoints;
 using CdpDotnetAuroraSpike.Example.Services;
 using CdpDotnetAuroraSpike.Utils;
@@ -8,12 +9,64 @@ using FluentValidation;
 using Serilog;
 using Serilog.Core;
 using System.Diagnostics.CodeAnalysis;
+using CdpDotnetAuroraSpike.Utils.Postgres;
+using Npgsql;
 
 //-------- Configure the WebApplication builder------------------//
+
 
 var app = CreateWebApplication(args);
 await app.RunAsync();
 
+static void RunLiquibase(WebApplicationBuilder _builder)
+{
+    try
+    {
+        string? postgresUri = _builder.Configuration.GetValue<string>("Postgres:JdbcUri");
+        // Set the Liquibase command you want to run (e.g., 'update')
+        string liquibaseCommand = "update";  // Other options: 'rollback', 'status', etc.
+            
+        // Set the path to your Liquibase executable (make sure it's in the system PATH)
+        string liquibasePath = "/usr/local/bin/liquibase";  // or full path to the liquibase executable
+
+        // Set the database connection details and changelog file
+        string changelogFile = "dbchangelog.xml";  // Path to your changelog file
+
+        // Construct the command to run
+        string arguments = $"--url={postgresUri} --changeLogFile={changelogFile} {liquibaseCommand}";
+
+        // Start the Liquibase process
+        ProcessStartInfo startInfo = new ProcessStartInfo
+        {
+            FileName = liquibasePath,
+            Arguments = arguments,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+            CreateNoWindow = true
+        };
+
+        using (Process? process = Process.Start(startInfo))
+        {
+            if (process != null)
+            {
+                string output = process.StandardOutput.ReadToEnd();
+                string error = process.StandardError.ReadToEnd();
+
+                Console.WriteLine($"Liquibase Output: {output}");
+                if (!string.IsNullOrEmpty(error))
+                {
+                    Console.WriteLine($"Liquibase Error: {error}");
+                }
+            }
+        }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Error running Liquibase, exiting: {ex.Message}");
+        Environment.Exit(1); 
+    }
+}
 
 [ExcludeFromCodeCoverage]
 static WebApplication CreateWebApplication(string[] args)
@@ -37,12 +90,15 @@ static void ConfigureWebApplication(WebApplicationBuilder _builder)
    // Load certificates into Trust Store - Note must happen before Mongo and Http client connections
    _builder.Services.AddCustomTrustStore(logger);
 
-   ConfigureMongoDb(_builder);
+   // RunLiquibase(_builder);
+   
+   // ConfigureMongoDb(_builder);
+   ConfigurePostgresDb(_builder);
 
    ConfigureEndpoints(_builder);
 
    _builder.Services.AddHttpClient();
-
+ 
    // calls outside the platform should be done using the named 'proxy' http client.
    _builder.Services.AddHttpProxyClient(logger);
 
@@ -69,6 +125,36 @@ static void ConfigureMongoDb(WebApplicationBuilder _builder)
    _builder.Services.AddSingleton<IMongoDbClientFactory>(_ =>
        new MongoDbClientFactory(_builder.Configuration.GetValue<string>("Mongo:DatabaseUri")!,
            _builder.Configuration.GetValue<string>("Mongo:DatabaseName")!));
+}
+
+[ExcludeFromCodeCoverage]
+static void ConfigurePostgresDb(WebApplicationBuilder _builder)
+{
+    // _builder.Services.AddDbContext<PostgresDbClientFactory.PostgresContext>(options =>
+        // options.UseNpgsql(_builder.Configuration.GetValue<string>("Postgres:DatabaseUri")));
+    
+        string? connString = _builder.Configuration.GetValue<string>("Postgres:DotNetUri");
+        
+        // Create a new connection
+        using var conn = new NpgsqlConnection(connString);
+        try
+        {
+            // Open the connection
+            conn.Open();
+            Console.WriteLine("Connected to the database successfully!");
+        
+            // Example query: Fetching data from a table
+            using var cmd = new NpgsqlCommand("SELECT version();", conn);
+            var version = cmd.ExecuteScalar()?.ToString();
+            Console.WriteLine($"PostgreSQL version: {version}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error: {ex.Message}");
+        }
+
+        _builder.Services.AddSingleton<IPostgresDbClientFactory>(_ =>
+    new PostgresDbClientFactory(_builder.Configuration.GetValue<string>("Postgres:DotNetUri")!));
 }
 
 [ExcludeFromCodeCoverage]
