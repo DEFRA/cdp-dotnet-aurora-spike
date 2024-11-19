@@ -93,7 +93,7 @@ static void ConfigureWebApplication(WebApplicationBuilder _builder)
    // RunLiquibase(_builder);
    
    // ConfigureMongoDb(_builder);
-   ConfigurePostgresDb(_builder);
+   ConfigurePostgresDb(_builder, logger);
 
    ConfigureEndpoints(_builder);
 
@@ -128,7 +128,7 @@ static void ConfigureMongoDb(WebApplicationBuilder _builder)
 }
 
 [ExcludeFromCodeCoverage]
-static void ConfigurePostgresDb(WebApplicationBuilder _builder)
+static void ConfigurePostgresDb(WebApplicationBuilder _builder, Logger logger)
 {
     // _builder.Services.AddDbContext<PostgresDbClientFactory.PostgresContext>(options =>
         // options.UseNpgsql(_builder.Configuration.GetValue<string>("Postgres:DatabaseUri")));
@@ -141,16 +141,16 @@ static void ConfigurePostgresDb(WebApplicationBuilder _builder)
         {
             // Open the connection
             conn.Open();
-            Console.WriteLine("Connected to the database successfully!");
+            logger.Information("Connected to the database successfully!");
         
             // Example query: Fetching data from a table
             using var cmd = new NpgsqlCommand("SELECT version();", conn);
             var version = cmd.ExecuteScalar()?.ToString();
-            Console.WriteLine($"PostgreSQL version: {version}");
+            logger.Information($"PostgreSQL version: {version}");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error: {ex.Message}");
+            logger.Error($"Error: {ex.Message}");
         }
 
         _builder.Services.AddSingleton<IPostgresDbClientFactory>(_ =>
