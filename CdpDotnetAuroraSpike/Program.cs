@@ -149,7 +149,7 @@ static void ConfigurePostgresDb(WebApplicationBuilder _builder, Logger logger)
             var password = Amazon.RDS.Util.RDSAuthTokenGenerator.GenerateAuthToken(RegionEndpoint.EUWest2,
                 "phil-test.cluster-c5kyrfhzgpe4.eu-west-2.rds.amazonaws.com", 5432, dbUserName);
 
-            connString = $"{connString};User ID={dbUserName};Password={password};";
+            connString = $"{connString}User ID={dbUserName};Password={password};SSL Mode=Require;";
         }
 
         logger.Information("Connecting to the database: " + connString);
@@ -164,7 +164,7 @@ static void ConfigurePostgresDb(WebApplicationBuilder _builder, Logger logger)
     }
     catch (Exception ex)
     {
-        logger.Error($"Error: {ex.Message}");
+        logger.Error(ex, $"Error: {ex.Message}");
     }
 
     _builder.Services.AddSingleton<IPostgresDbClientFactory>(_ =>
