@@ -4,6 +4,8 @@ WORKDIR /app
 EXPOSE 80
 EXPOSE 443
 
+COPY eu-west-2-bundle.pem /eu-west-2-bundle.pem
+
 # Add curl to template.
 # CDP PLATFORM HEALTHCHECK REQUIREMENT
 RUN apt update && \
