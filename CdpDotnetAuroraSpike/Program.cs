@@ -138,19 +138,22 @@ static void ConfigurePostgresDb(WebApplicationBuilder _builder, Logger logger)
     var connString = _builder.Configuration.GetValue<string>("Postgres:DotNetUri");
     var useIamAuthentication = _builder.Configuration.GetValue<bool>("Postgres:UseIamAuthentication");
 
+    if (useIamAuthentication)
+    if (useIamAuthentication)
+    {
+        logger.Information("Generating auth token...");
+        var dbUserName = "cdp-dotnet-aurora-spike";
+        var password = Amazon.RDS.Util.RDSAuthTokenGenerator.GenerateAuthToken(RegionEndpoint.EUWest2,
+                "phil-test.cluster-c5kyrfhzgpe4.eu-west-2.rds.amazonaws.com", 5432, dbUserName);
+
+
+        connString = $"{connString}User ID={dbUserName};Password={password};";
+    }
+    
     // Create a new connection
     using var conn = new NpgsqlConnection(connString);
     try
     {
-        if (useIamAuthentication)
-        {
-            logger.Information("Generating auth token...");
-            var dbUserName = "cdp-dotnet-aurora-spike";
-            var password = Amazon.RDS.Util.RDSAuthTokenGenerator.GenerateAuthToken(RegionEndpoint.EUWest2,
-                "phil-test.cluster-c5kyrfhzgpe4.eu-west-2.rds.amazonaws.com", 5432, dbUserName);
-
-            connString = $"{connString}User ID={dbUserName};Password={password};SSL Mode=Require;";
-        }
 
         logger.Information("Connecting to the database: " + connString);
         // Open the connection
