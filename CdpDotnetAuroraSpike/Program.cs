@@ -139,6 +139,7 @@ static void ConfigurePostgresDb(WebApplicationBuilder _builder, Logger logger)
         using var conn = new NpgsqlConnection(connString);
         try
         {
+            logger.Information("Connecting to the database: " + connString );
             // Open the connection
             conn.Open();
             logger.Information("Connected to the database successfully!");
